@@ -18,9 +18,6 @@
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
-<!-- iframe مخفي -->
-<iframe id="hiddenFrame" style="display:none;"></iframe>
-
 <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
     
     <div class="p-6 text-center border-b border-gray-50 bg-white">
@@ -41,7 +38,7 @@
                     بـحـرّاس وبـوَّابـي <br> مدارس تعليم عسير
                 </p>
             </div>
-            <button onclick="nextStep(2)" class="w-full bg-moe-green text-white py-4 rounded-2xl font-bold">
+            <button onclick="nextStep(2)" class="w-full bg-moe-green text-white py-4 rounded-2xl font-bold hover:bg-opacity-90 transition">
                 تـسـجـيـل الـحـضـور
             </button>
         </div>
@@ -82,7 +79,7 @@
 
                 <input type="text" id="school" placeholder="المدرسة" required class="w-full p-4 bg-gray-50 border rounded-xl">
 
-                <button id="submitBtn" class="w-full bg-moe-green text-white py-4 rounded-2xl font-bold">
+                <button type="submit" id="submitBtn" class="w-full bg-moe-green text-white py-4 rounded-2xl font-bold transition">
                     تأكيد الحضور والاستلام
                 </button>
             </form>
@@ -90,11 +87,12 @@
 
         <div id="step3" class="step text-center">
             <div class="mb-6">
-                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto text-3xl">✓</div>
+                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto text-3xl moe-green">✓</div>
                 <h3 class="text-xl font-bold mt-4">تم التسجيل بنجاح</h3>
+                <p class="text-gray-500 text-sm mt-2">تم إصدار شهادتك وهي جاهزة للتحميل</p>
             </div>
 
-            <button onclick="downloadCertificate()" class="w-full bg-moe-gold text-white py-4 rounded-2xl font-bold">
+            <button onclick="downloadCertificate()" class="w-full bg-moe-gold text-white py-4 rounded-2xl font-bold hover:bg-opacity-90 transition">
                 تحميل الشهادة PDF
             </button>
         </div>
@@ -103,8 +101,8 @@
 </div>
 
 <script>
-
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbygyMwCHXKG1lBx_Gctk2Hpv9x4Cvaq_0XhQUkpiW0AJCPb8QDl-9o0tVX5EKyqeLH4cw/exec";
+// ⚠️ ضع هنا رابط السكربت الذي حصلت عليه بعد النشر الجديد (Web App URL)
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSWCLDadcYY6MC51XN3AWqwsE01dgC87g6ZDFGAdVNmdUBxg-gDKNpicnrEVQq3WeG7A/exec";
 
 let pdfLink = null;
 
@@ -113,45 +111,71 @@ function nextStep(step) {
     document.getElementById('step' + step).classList.add('active');
 }
 
-document.getElementById('attendanceForm').addEventListener('submit', function(e){
+document.getElementById('attendanceForm').addEventListener('submit', async function(e){
     e.preventDefault();
 
     const btn = document.getElementById('submitBtn');
-
     const nationalId = document.getElementById('nationalId').value;
     const phone = document.getElementById('phone').value;
 
     if(nationalId.length !== 10 || phone.length !== 10){
-        alert("تأكد من إدخال 10 أرقام صحيحة");
+        alert("تأكد من إدخال 10 أرقام صحيحة للسجل المدني ورقم الجوال");
         return;
     }
 
-    btn.innerHTML = "⏳ جاري إصدار الشهادة...";
+    // تغيير حالة الزر أثناء الانتظار
+    btn.innerHTML = "⏳ جاري التسجيل وإصدار الشهادة...";
     btn.disabled = true;
+    btn.classList.add("opacity-75", "cursor-not-allowed");
 
-    const params = new URLSearchParams({
+    // تجهيز البيانات للإرسال
+    const payload = {
         name: document.getElementById('fullName').value,
         id: nationalId,
         city: document.getElementById('city').value,
         phone: phone,
         school: document.getElementById('school').value
-    });
+    };
 
-    // تشغيل السكربت بدون CORS
-    document.getElementById('hiddenFrame').src = GOOGLE_SCRIPT_URL + "?" + params.toString();
+    try {
+        // إرسال البيانات إلى قوقل سكربت واستقبال الرابط
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+        });
 
-    // توليد الرابط المتوقع
-    pdfLink = "https://drive.google.com/drive/folders/1DpTLADd-Hhf48hGhYH6HHIyTvRmUigk8";
+        const result = await response.json();
 
-    setTimeout(() => {
-        nextStep(3);
-    }, 2500);
+        if (result.status === 'success') {
+            pdfLink = result.pdfUrl; // حفظ رابط الشهادة الخاص بهذا المستخدم
+            nextStep(3); // الانتقال لصفحة النجاح
+        } else {
+            alert("حدث خطأ أثناء إصدار الشهادة: " + result.message);
+            resetButton(btn);
+        }
+    } catch (error) {
+        alert("تعذر الاتصال بالخادم، يرجى المحاولة مرة أخرى.");
+        console.error(error);
+        resetButton(btn);
+    }
 });
 
-function downloadCertificate(){
-    window.open(pdfLink, "_blank");
+// إعادة الزر لحالته الطبيعية في حال حدوث خطأ
+function resetButton(btn) {
+    btn.innerHTML = "تأكيد الحضور والاستلام";
+    btn.disabled = false;
+    btn.classList.remove("opacity-75", "cursor-not-allowed");
 }
 
+// فتح رابط الشهادة
+function downloadCertificate(){
+    if (pdfLink) {
+        window.open(pdfLink, "_blank");
+    } else {
+        alert("حدث خطأ، رابط الشهادة غير متوفر.");
+    }
+}
 </script>
 
 </body>
