@@ -78,11 +78,10 @@
     </div>
 
     <div id="certificateTemplate" class="hidden">
-        <div id="certContainer" style="width: 1123px; height: 794px; position: relative; background: url('certificate_bg.png') no-repeat center; background-size: 100% 100%; font-family: 'Cairo', sans-serif; background-color: white;">
+        <div id="certContainer" style="width: 3508px; height: 2480px; position: relative; background: url('certificate_bg.png') no-repeat center; background-size: 100% 100%; font-family: 'Cairo', sans-serif; background-color: white;">
              
-             <div id="certNameTxt" style="position: absolute; top: 300px; right: 260px; width: 400px; text-align: right; font-size: 24px; font-weight: 800; color: #00735C;">محمد حسن عبدالله الشمراني</div>
-             
-             </div>
+             <div id="certNameTxt" style="position: absolute; top: 1060px; right: 820px; width: 1500px; text-align: right; font-size: 80px; font-weight: 800; color: #00735C; font-family: 'Amiri', serif;">محمد حسن عبدالله الشمراني</div>
+        </div>
     </div>
 
     <script>
@@ -110,19 +109,26 @@
 
             const name = document.getElementById('fullName').value;
 
-            // 1. وضع البيانات في قالب الشهادة
+            // 1. وضع البيانات في قالب الشهادة الضخم
             document.getElementById('certNameTxt').innerText = name;
 
-            // 2. إظهار القالب لتوليد الـ PDF بدقة
+            // 2. إظهار القالب لتوليد الـ PDF بدقة فائقة
             const element = document.getElementById('certificateTemplate');
             element.classList.remove('hidden');
             
+            // إعدادات الدقة الفائقة (4K)
             const opt = {
                 margin: 0,
                 filename: 'temp.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 3, useCORS: true }, // رفع الدقة للطباعة
-                jsPDF: { unit: 'px', format: [1123, 794], orientation: 'landscape' }
+                image: { type: 'jpeg', quality: 1 },
+                html2canvas: { 
+                    scale: 1, // لا نحتاج لرفع الـ scale لأن الأبعاد الأصلية ضخمة بالفعل
+                    useCORS: true, 
+                    allowTaint: true,
+                    letterRendering: true,
+                    logging: false
+                }, 
+                jsPDF: { unit: 'px', format: [3508, 2480], orientation: 'landscape', compress: true } // نحدد الأبعاد الضخمة هنا
             };
 
             try {
@@ -162,12 +168,14 @@
         function downloadCertificate() {
             const element = document.getElementById('certificateTemplate');
             element.classList.remove('hidden');
+            
+            // إعدادات تحميل فائقة الدقة للمستخدم (4K)
             html2pdf().from(element).set({
                 margin: 0,
                 filename: `شهادة_حضور_${document.getElementById('certNameTxt').innerText}.pdf`,
                 image: { type: 'jpeg', quality: 1 },
-                html2canvas: { scale: 3, useCORS: true },
-                jsPDF: { unit: 'px', format: [1123, 794], orientation: 'landscape' }
+                html2canvas: { scale: 1, useCORS: true, letterRendering: true }, // نستخدم scale 1 لأن الأبعاد الأصلية ضخمة
+                jsPDF: { unit: 'px', format: [3508, 2480], orientation: 'landscape', compress: true }
             }).save().then(() => element.classList.add('hidden'));
         }
     </script>
