@@ -26,7 +26,6 @@
 
     <div class="p-8">
         
-        <!-- الصفحة الأولى -->
         <div id="step1" class="step active text-center">
             <p class="text-gray-500 text-sm mb-1 font-semibold">برعاية</p>
             <h2 class="text-xl font-bold moe-green mb-4 Amiri">لقاء صاحب السمو الملكي الأمير</h2>
@@ -44,20 +43,41 @@
             </button>
         </div>
 
-        <!-- الفورم -->
         <div id="step2" class="step">
             <h3 class="text-lg font-bold text-center mb-6">بيانات تأكيد الحضور</h3>
 
             <form id="attendanceForm" class="space-y-4">
-                <input type="text" id="fullName" placeholder="الاسم الرباعي" required class="w-full p-4 bg-gray-50 border rounded-xl">
-                <input type="number" id="nationalId" placeholder="السجل المدني" required class="w-full p-4 bg-gray-50 border rounded-xl">
 
+                <input type="text" id="fullName" placeholder="الاسم الرباعي" required class="w-full p-4 bg-gray-50 border rounded-xl">
+
+                <input type="text" id="nationalId" maxlength="10" pattern="[0-9]{10}" placeholder="السجل المدني (10 أرقام)" required class="w-full p-4 bg-gray-50 border rounded-xl">
+
+                <!-- جميع محافظات عسير -->
                 <select id="city" required class="w-full p-4 bg-gray-50 border rounded-xl">
                     <option value="" disabled selected>اختر المحافظة</option>
-                    <option>أبها</option><option>خميس مشيط</option><option>بيشة</option>
+                    <option>أبها</option>
+                    <option>خميس مشيط</option>
+                    <option>بيشة</option>
+                    <option>النماص</option>
+                    <option>محايل عسير</option>
+                    <option>ظهران الجنوب</option>
+                    <option>سراة عبيدة</option>
+                    <option>رجال ألمع</option>
+                    <option>تثليث</option>
+                    <option>تنومة</option>
+                    <option>أحد رفيدة</option>
+                    <option>المجاردة</option>
+                    <option>بارق</option>
+                    <option>بلقرن</option>
+                    <option>الحرجة</option>
+                    <option>طريب</option>
+                    <option>البرك</option>
+                    <option>الواديين</option>
+                    <option>القحمة</option>
                 </select>
 
-                <input type="number" id="phone" placeholder="رقم الجوال" required class="w-full p-4 bg-gray-50 border rounded-xl">
+                <input type="text" id="phone" maxlength="10" pattern="05[0-9]{8}" placeholder="رقم الجوال (05xxxxxxxx)" required class="w-full p-4 bg-gray-50 border rounded-xl">
+
                 <input type="text" id="school" placeholder="المدرسة" required class="w-full p-4 bg-gray-50 border rounded-xl">
 
                 <button id="submitBtn" class="w-full bg-moe-green text-white py-4 rounded-2xl font-bold">
@@ -66,7 +86,6 @@
             </form>
         </div>
 
-        <!-- النجاح -->
         <div id="step3" class="step text-center">
             <div class="mb-6">
                 <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto text-3xl">✓</div>
@@ -87,60 +106,53 @@ const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxhR6od8YBZZK
 
 let pdfLink = null;
 
-// التنقل
 function nextStep(step) {
     document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
     document.getElementById('step' + step).classList.add('active');
 }
 
-// إرسال البيانات
 document.getElementById('attendanceForm').addEventListener('submit', async function(e){
     e.preventDefault();
 
     const btn = document.getElementById('submitBtn');
+
+    const nationalId = document.getElementById('nationalId').value;
+    const phone = document.getElementById('phone').value;
+
+    if(nationalId.length !== 10 || phone.length !== 10){
+        alert("تأكد من إدخال 10 أرقام صحيحة");
+        return;
+    }
+
     btn.innerHTML = "⏳ جاري إصدار الشهادة...";
     btn.disabled = true;
 
     const payload = {
         name: document.getElementById('fullName').value,
-        id: document.getElementById('nationalId').value,
+        id: nationalId,
         city: document.getElementById('city').value,
-        phone: document.getElementById('phone').value,
+        phone: phone,
         school: document.getElementById('school').value
     };
 
     try {
-
         const res = await fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            mode: "no-cors",
             body: JSON.stringify(payload)
         });
 
-        const data = await res.json();
-
-        if(data.status === "success"){
-            pdfLink = data.url;
-            nextStep(3);
-        } else {
-            throw new Error(data.message);
-        }
+        nextStep(3);
 
     } catch(err){
         alert("حدث خطأ");
         btn.disabled = false;
         btn.innerHTML = "تأكيد الحضور";
     }
-
 });
 
-// تحميل الشهادة
 function downloadCertificate(){
-    if(pdfLink){
-        window.open(pdfLink, "_blank");
-    } else {
-        alert("لم يتم إنشاء الشهادة");
-    }
+    window.open("https://drive.google.com/drive/folders/1DpTLADd-Hhf48hGhYH6HHIyTvRmUigk8", "_blank");
 }
 
 </script>
