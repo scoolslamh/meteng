@@ -18,6 +18,9 @@
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
+<!-- iframe مخفي -->
+<iframe id="hiddenFrame" style="display:none;"></iframe>
+
 <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
     
     <div class="p-6 text-center border-b border-gray-50 bg-white">
@@ -52,7 +55,6 @@
 
                 <input type="text" id="nationalId" maxlength="10" pattern="[0-9]{10}" placeholder="السجل المدني (10 أرقام)" required class="w-full p-4 bg-gray-50 border rounded-xl">
 
-                <!-- جميع محافظات عسير -->
                 <select id="city" required class="w-full p-4 bg-gray-50 border rounded-xl">
                     <option value="" disabled selected>اختر المحافظة</option>
                     <option>أبها</option>
@@ -102,7 +104,7 @@
 
 <script>
 
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxhR6od8YBZZKPCgToZ-yE8pxL3I1QcRC0TrWXusITzQHq-phhys2C7B5z7ktYr9-v3nQ/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzFFutvi9zKIjLEYR-UCvwm1sovG_sjIMnnWlBdwDTFuT6kHVWEo8aba6dake_qtTBhkw/exec";
 
 let pdfLink = null;
 
@@ -111,7 +113,7 @@ function nextStep(step) {
     document.getElementById('step' + step).classList.add('active');
 }
 
-document.getElementById('attendanceForm').addEventListener('submit', async function(e){
+document.getElementById('attendanceForm').addEventListener('submit', function(e){
     e.preventDefault();
 
     const btn = document.getElementById('submitBtn');
@@ -127,32 +129,27 @@ document.getElementById('attendanceForm').addEventListener('submit', async funct
     btn.innerHTML = "⏳ جاري إصدار الشهادة...";
     btn.disabled = true;
 
-    const payload = {
+    const params = new URLSearchParams({
         name: document.getElementById('fullName').value,
         id: nationalId,
         city: document.getElementById('city').value,
         phone: phone,
         school: document.getElementById('school').value
-    };
+    });
 
-    try {
-        const res = await fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            mode: "no-cors",
-            body: JSON.stringify(payload)
-        });
+    // تشغيل السكربت بدون CORS
+    document.getElementById('hiddenFrame').src = GOOGLE_SCRIPT_URL + "?" + params.toString();
 
+    // توليد الرابط المتوقع
+    pdfLink = "https://drive.google.com/drive/folders/1DpTLADd-Hhf48hGhYH6HHIyTvRmUigk8";
+
+    setTimeout(() => {
         nextStep(3);
-
-    } catch(err){
-        alert("حدث خطأ");
-        btn.disabled = false;
-        btn.innerHTML = "تأكيد الحضور";
-    }
+    }, 2500);
 });
 
 function downloadCertificate(){
-    window.open("https://drive.google.com/drive/folders/1DpTLADd-Hhf48hGhYH6HHIyTvRmUigk8", "_blank");
+    window.open(pdfLink, "_blank");
 }
 
 </script>
