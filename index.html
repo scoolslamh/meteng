@@ -149,7 +149,7 @@ document.getElementById('attendanceForm').addEventListener('submit', async funct
             nextStep(3);
         } else {
             alert("حدث خطأ: " + result.message);
-            btn.innerHTML = "تأكيد الحضور والاستلام";
+            btn.innerHTML = "تأكيد الحضور ";
             btn.disabled = false;
         }
     } catch (error) {
