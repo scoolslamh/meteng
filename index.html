@@ -42,8 +42,22 @@
     </div>
 
     <div class="p-8">
+
+        <div id="step-loading" class="step active text-center py-8">
+            <svg class="animate-spin h-12 w-12 text-emerald-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-gray-500 font-bold animate-pulse">جاري التحقق من حالة التسجيل...</p>
+        </div>
+
+        <div id="step-closed" class="step text-center py-4">
+            <div class="w-24 h-24 bg-rose-50 rounded-full flex items-center justify-center mx-auto text-5xl mb-6 shadow-inner border border-rose-100">🔒</div>
+            <h2 class="text-2xl font-bold text-rose-600 mb-3 Amiri">التسجيل مغلق حالياً</h2>
+            <p class="text-gray-500 text-sm font-semibold leading-relaxed">عذراً، تم إغلاق باب تسجيل الحضور <br> نشكر لكم اهتمامكم.</p>
+        </div>
         
-        <div id="step1" class="step active text-center">
+        <div id="step1" class="step text-center">
             <p class="text-gray-500 text-sm mb-1 font-semibold">لقاء</p>
             <h2 class="text-xl font-bold moe-green mb-4 Amiri">صاحب السمو الملكي الأمير</h2>
             <div class="my-6">
@@ -100,7 +114,7 @@
 </div>
 
 <script>
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyJ5IwYmYzuvUEioPoqWhvOj_jI3EbdoRBJNy_ImEGyAmF083F-1QyFU2PwMz85WC3f/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzI8nCn3NhLEcdfNJKtIZqw9BsAIkFaQVXQnvAEpl6ifEcJufkBsG4mcLFCRwvLlbGx/exec";
 
 let schoolData = {};
 let cityChoices, schoolChoices;
@@ -146,18 +160,17 @@ window.onload = async () => {
         const response = await fetch(GOOGLE_SCRIPT_URL);
         const data = await response.json();
         
-        // --- الإضافة الجديدة: فحص هل التسجيل مغلق؟ ---
+        // 1. إخفاء جميع الشاشات (بما فيها شاشة التحميل)
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+
+        // 2. التحقق من حالة التسجيل
         if (data.isClosed) {
-            document.getElementById('step1').innerHTML = `
-                <div class="py-8">
-                    <div class="w-24 h-24 bg-rose-50 rounded-full flex items-center justify-center mx-auto text-5xl mb-6 shadow-inner border border-rose-100">🔒</div>
-                    <h2 class="text-2xl font-bold text-rose-600 mb-3 Amiri">التسجيل مغلق حالياً</h2>
-                    <p class="text-gray-500 text-sm font-semibold leading-relaxed">عذراً، تم إغلاق باب تسجيل الحضور <br> نشكر لكم اهتمامكم.</p>
-                </div>
-            `;
+            document.getElementById('step-closed').classList.add('active');
             return; // إيقاف باقي السكربت وعدم تحميل المدارس
         }
-        // ----------------------------------------------
+
+        // 3. إذا كان مفتوحاً، اعرض الشاشة الأولى للترحيب
+        document.getElementById('step1').classList.add('active');
 
         schoolData = data;
         let cities = Object.keys(schoolData).sort().map(city => ({ value: city, label: city }));
@@ -167,6 +180,10 @@ window.onload = async () => {
         cityChoices.setChoices(allChoices, 'value', 'label', true);
 
     } catch (e) {
+        // في حالة وجود خطأ في الاتصال، إخفاء التحميل وإظهار الشاشة الأولى كإجراء احتياطي
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        document.getElementById('step1').classList.add('active');
+
         cityChoices.clearStore();
         cityChoices.setChoices([{ value: '', label: 'فشل تحميل البيانات', selected: true, disabled: true }], 'value', 'label', true);
     }
@@ -210,7 +227,7 @@ document.getElementById('attendanceForm').addEventListener('submit', async funct
         if (result.status === 'success') {
             nextStep(3);
         } else {
-            alert("حدث خطأ في التسجيل");
+            alert(result.message || "حدث خطأ في التسجيل");
             btn.innerHTML = "تأكيد الحضور";
             btn.disabled = false;
         }
