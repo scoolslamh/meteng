@@ -29,10 +29,6 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-        /* انيميشن التحميل */
-        .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #f7f7f7 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
-        @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
         /* تحديد أقصى عرض للمحتوى لراحة العين */
         .main-container { max-width: 1400px; margin: 0 auto; }
     </style>
@@ -59,36 +55,51 @@
             </button>
         </header>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div class="card-stat border-b-4 border-blue-500">
                 <p class="text-xs text-gray-500 font-bold mb-1">إجمالي المدارس</p>
                 <h2 id="totalSchools" class="text-2xl font-black text-slate-700">-</h2>
             </div>
             <div class="card-stat border-b-4 border-emerald-500">
-                <p class="text-xs text-gray-500 font-bold mb-1">تم التسجيل</p>
+                <p class="text-xs text-gray-500 font-bold mb-1">المدارس المسجلة</p>
                 <h2 id="regCount" class="text-2xl font-black text-emerald-600">-</h2>
             </div>
             <div class="card-stat border-b-4 border-rose-500">
-                <p class="text-xs text-gray-500 font-bold mb-1">المتبقي</p>
+                <p class="text-xs text-gray-500 font-bold mb-1">المدارس المتبقية</p>
                 <h2 id="missingCount" class="text-2xl font-black text-rose-600">-</h2>
             </div>
             <div class="card-stat border-b-4 border-amber-500">
-                <p class="text-xs text-gray-500 font-bold mb-1">الإنجاز</p>
+                <p class="text-xs text-gray-500 font-bold mb-1">نسبة إنجاز المدارس</p>
                 <h2 id="percent" class="text-2xl font-black text-amber-600">-%</h2>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4 mb-8">
+            <div class="card-stat bg-indigo-50 border-indigo-100 flex flex-col items-center justify-center py-6">
+                <p class="text-sm text-indigo-600 font-bold mb-2">إجمالي المدراء</p>
+                <h2 id="managerCount" class="text-3xl font-black text-indigo-800">-</h2>
+            </div>
+            <div class="card-stat bg-teal-50 border-teal-100 flex flex-col items-center justify-center py-6">
+                <p class="text-sm text-teal-600 font-bold mb-2">إجمالي الحراس</p>
+                <h2 id="guardCount" class="text-3xl font-black text-teal-800">-</h2>
+            </div>
+            <div class="card-stat bg-orange-50 border-orange-100 flex flex-col items-center justify-center py-6">
+                <p class="text-sm text-orange-600 font-bold mb-2">إجمالي البوابين</p>
+                <h2 id="gatekeeperCount" class="text-3xl font-black text-orange-800">-</h2>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div class="card-stat lg:col-span-2">
                 <h3 class="font-bold text-gray-600 mb-4 flex items-center gap-2">
-                    <span class="w-2 h-2 bg-moe-green rounded-full"></span> توزيع الحضور (محافظات)
+                    <span class="w-2 h-2 bg-moe-green rounded-full"></span> توزيع حضور المدارس (محافظات)
                 </h3>
                 <div class="h-[280px]">
                     <canvas id="cityChart"></canvas>
                 </div>
             </div>
             <div class="card-stat">
-                <h3 class="font-bold text-gray-600 mb-4 text-center">مؤشر الأداء العام</h3>
+                <h3 class="font-bold text-gray-600 mb-4 text-center">مؤشر أداء المدارس</h3>
                 <div class="relative h-[220px] flex items-center justify-center">
                     <canvas id="pieChart"></canvas>
                 </div>
@@ -112,24 +123,24 @@
                             </tr>
                         </thead>
                         <tbody id="missingTable" class="divide-y divide-gray-50">
-                            </tbody>
+                        </tbody>
                     </table>
                 </div>
             </div>
 
             <div class="card-stat flex flex-col">
-                <h3 class="font-bold text-gray-700 mb-4">كفاءة التسجيل حسب القطاع</h3>
+                <h3 class="font-bold text-gray-700 mb-4">كفاءة تسجيل المدارس حسب القطاع</h3>
                 <div id="cityList" class="space-y-5 overflow-y-auto custom-scrollbar pr-2">
-                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbx7D7b0BNpbNOh2F0SKHwGevRTVrCAQ0_1XuRdrjOwy9BA_OcFZ9YHKoR60USXtAXhS/exec?view=stats";
+        // ضع رابط السكربت الخاص بك هنا
+        const API_URL = "https://script.google.com/macros/s/AKfycbxoYxaN7aas-nE4jM_Qx0tdP5FnunUNDBeMV-18eRryZ2txRMocQ_azZ0ajNm4_RleZ/exec?view=stats";
         let cityChart, pieChart;
 
-        // إعدادات افتراضية لـ Chart.js لتقليل استهلاك المعالج
         Chart.defaults.font.family = 'Cairo';
         Chart.defaults.responsive = true;
         Chart.defaults.maintainAspectRatio = false;
@@ -147,15 +158,19 @@
 
                 if (data.error) throw new Error(data.error);
 
-                // تحديث العدادات بأنيميشن خفيف
+                // تحديث عدادات المدارس
                 updateCounter('totalSchools', data.totalSchools);
                 updateCounter('regCount', data.registeredCount);
                 const missing = data.totalSchools - data.registeredCount;
                 updateCounter('missingCount', missing);
-                
                 const percentage = data.totalSchools > 0 ? Math.round((data.registeredCount / data.totalSchools) * 100) : 0;
                 document.getElementById('percent').innerText = percentage + "%";
                 document.getElementById('missingBadge').innerText = `${missing} مدرسة`;
+
+                // تحديث عدادات الوظائف (الجديدة)
+                updateCounter('managerCount', data.jobs ? data.jobs.manager : 0);
+                updateCounter('guardCount', data.jobs ? data.jobs.guard : 0);
+                updateCounter('gatekeeperCount', data.jobs ? data.jobs.gatekeeper : 0);
 
                 renderTable(data.missingSchools);
                 updateCityList(data.byCity || {});
@@ -172,6 +187,7 @@
 
         function updateCounter(id, value) {
             const el = document.getElementById(id);
+            if(!el) return;
             el.style.opacity = 0;
             setTimeout(() => {
                 el.innerText = value || 0;
