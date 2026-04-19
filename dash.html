@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إحصائيات تعليم عسير الاحترافية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --moe-green: #00735C; --moe-light: #e6f1ef; }
+        body { font-family: 'Cairo', sans-serif; background-color: #f8fafc; color: #1e293b; overflow-x: hidden; }
+        .moe-green { color: var(--moe-green); }
+        .bg-moe-green { background-color: var(--moe-green); }
+        
+        /* تحسين شكل الكروت */
+        .card-stat { 
+            background: white; 
+            border-radius: 1.25rem; 
+            padding: 1.5rem; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #f1f5f9;
+        }
+        .card-stat:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        
+        /* انسيابية القوائم */
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* انيميشن التحميل */
+        .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #f7f7f7 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
+        @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* تحديد أقصى عرض للمحتوى لراحة العين */
+        .main-container { max-width: 1400px; margin: 0 auto; }
+    </style>
+</head>
+<body class="p-4 lg:p-6">
+
+    <div class="main-container">
+        <header class="flex flex-wrap justify-between items-center mb-8 gap-4 bg-white p-5 rounded-3xl shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-moe-light rounded-2xl flex items-center justify-center">
+                    <img src="logo.png" class="h-8 object-contain" alt="Logo">
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold moe-green leading-tight">بوابة المتابعة الذكية</h1>
+                    <p class="text-xs text-gray-400 font-semibold">إحصائيات اللقاء - تعليم عسير</p>
+                </div>
+            </div>
+            
+            <button onclick="loadStats()" id="refreshBtn" class="bg-moe-green text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-emerald-800 transition-all active:scale-95 shadow-md shadow-emerald-100">
+                <svg id="refreshIcon" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span class="text-sm">تحديث مباشر</span>
+            </button>
+        </header>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="card-stat border-b-4 border-blue-500">
+                <p class="text-xs text-gray-500 font-bold mb-1">إجمالي المدارس</p>
+                <h2 id="totalSchools" class="text-2xl font-black text-slate-700">-</h2>
+            </div>
+            <div class="card-stat border-b-4 border-emerald-500">
+                <p class="text-xs text-gray-500 font-bold mb-1">تم التسجيل</p>
+                <h2 id="regCount" class="text-2xl font-black text-emerald-600">-</h2>
+            </div>
+            <div class="card-stat border-b-4 border-rose-500">
+                <p class="text-xs text-gray-500 font-bold mb-1">المتبقي</p>
+                <h2 id="missingCount" class="text-2xl font-black text-rose-600">-</h2>
+            </div>
+            <div class="card-stat border-b-4 border-amber-500">
+                <p class="text-xs text-gray-500 font-bold mb-1">الإنجاز</p>
+                <h2 id="percent" class="text-2xl font-black text-amber-600">-%</h2>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="card-stat lg:col-span-2">
+                <h3 class="font-bold text-gray-600 mb-4 flex items-center gap-2">
+                    <span class="w-2 h-2 bg-moe-green rounded-full"></span> توزيع الحضور (محافظات)
+                </h3>
+                <div class="h-[280px]">
+                    <canvas id="cityChart"></canvas>
+                </div>
+            </div>
+            <div class="card-stat">
+                <h3 class="font-bold text-gray-600 mb-4 text-center">مؤشر الأداء العام</h3>
+                <div class="relative h-[220px] flex items-center justify-center">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="card-stat !p-0 overflow-hidden flex flex-col">
+                <div class="p-4 bg-rose-50 border-b border-rose-100">
+                    <h3 class="font-bold text-rose-700 flex justify-between items-center">
+                        <span>المدارس المتأخرة</span>
+                        <span id="missingBadge" class="bg-rose-200 text-rose-800 text-[10px] px-2 py-0.5 rounded-full">جاري الفحص..</span>
+                    </h3>
+                </div>
+                <div class="max-h-[350px] overflow-y-auto custom-scrollbar">
+                    <table class="w-full text-right text-sm">
+                        <thead class="bg-gray-50 sticky top-0 shadow-sm">
+                            <tr>
+                                <th class="p-3 text-gray-500">المحافظة</th>
+                                <th class="p-3 text-gray-500">المدرسة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="missingTable" class="divide-y divide-gray-50">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card-stat flex flex-col">
+                <h3 class="font-bold text-gray-700 mb-4">كفاءة التسجيل حسب القطاع</h3>
+                <div id="cityList" class="space-y-5 overflow-y-auto custom-scrollbar pr-2">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbx7D7b0BNpbNOh2F0SKHwGevRTVrCAQ0_1XuRdrjOwy9BA_OcFZ9YHKoR60USXtAXhS/exec?view=stats";
+        let cityChart, pieChart;
+
+        // إعدادات افتراضية لـ Chart.js لتقليل استهلاك المعالج
+        Chart.defaults.font.family = 'Cairo';
+        Chart.defaults.responsive = true;
+        Chart.defaults.maintainAspectRatio = false;
+
+        async function loadStats() {
+            const btn = document.getElementById('refreshBtn');
+            const icon = document.getElementById('refreshIcon');
+            
+            btn.disabled = true;
+            icon.classList.add('animate-spin');
+            
+            try {
+                const res = await fetch(API_URL);
+                const data = await res.json();
+
+                if (data.error) throw new Error(data.error);
+
+                // تحديث العدادات بأنيميشن خفيف
+                updateCounter('totalSchools', data.totalSchools);
+                updateCounter('regCount', data.registeredCount);
+                const missing = data.totalSchools - data.registeredCount;
+                updateCounter('missingCount', missing);
+                
+                const percentage = data.totalSchools > 0 ? Math.round((data.registeredCount / data.totalSchools) * 100) : 0;
+                document.getElementById('percent').innerText = percentage + "%";
+                document.getElementById('missingBadge').innerText = `${missing} مدرسة`;
+
+                renderTable(data.missingSchools);
+                updateCityList(data.byCity || {});
+                updateCharts(data);
+
+            } catch (e) {
+                console.error("Connection Error:", e);
+                alert("تعذر جلب البيانات، يرجى التحقق من اتصالك.");
+            } finally {
+                btn.disabled = false;
+                icon.classList.remove('animate-spin');
+            }
+        }
+
+        function updateCounter(id, value) {
+            const el = document.getElementById(id);
+            el.style.opacity = 0;
+            setTimeout(() => {
+                el.innerText = value || 0;
+                el.style.opacity = 1;
+            }, 200);
+        }
+
+        function renderTable(schools) {
+            const table = document.getElementById('missingTable');
+            if (!schools || schools.length === 0) {
+                table.innerHTML = `<tr><td colspan="2" class="p-8 text-center text-emerald-600 font-bold">✅ تم اكتمال كافة البيانات</td></tr>`;
+                return;
+            }
+            table.innerHTML = schools.map(item => `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="p-3 text-gray-500">${item.city}</td>
+                    <td class="p-3 font-semibold text-gray-700">${item.school}</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateCityList(cities) {
+            const container = document.getElementById('cityList');
+            const keys = Object.keys(cities);
+            container.innerHTML = keys.map(name => {
+                const city = cities[name];
+                const p = Math.round((city.reg / city.total) * 100);
+                return `
+                    <div class="group">
+                        <div class="flex justify-between mb-1.5 text-xs font-bold">
+                            <span class="text-gray-700">${name}</span>
+                            <span class="text-moe-green">${p}%</span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                            <div class="bg-moe-green h-full rounded-full transition-all duration-1000" style="width: ${p}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateCharts(data) {
+            const cities = Object.keys(data.byCity || {});
+            const regValues = cities.map(c => data.byCity[c].reg);
+
+            // Bar Chart
+            const ctxCity = document.getElementById('cityChart').getContext('2d');
+            if (cityChart) cityChart.destroy();
+            cityChart = new Chart(ctxCity, {
+                type: 'bar',
+                data: {
+                    labels: cities,
+                    datasets: [{
+                        data: regValues,
+                        backgroundColor: '#00735C',
+                        borderRadius: 6,
+                        barThickness: 20
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { display: false } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // Pie Chart
+            const ctxPie = document.getElementById('pieChart').getContext('2d');
+            if (pieChart) pieChart.destroy();
+            pieChart = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: ['سجلوا', 'متبقي'],
+                    datasets: [{
+                        data: [data.registeredCount, data.totalSchools - data.registeredCount],
+                        backgroundColor: ['#00735C', '#fecaca'],
+                        borderWidth: 0,
+                        cutout: '80%'
+                    }]
+                },
+                options: {
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }
+                }
+            });
+        }
+
+        window.onload = loadStats;
+    </script>
+</body>
+</html>
