@@ -6,14 +6,31 @@
     <title>تأكيد حضور لقاء تعليم عسير</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
     <style>
         body { font-family: 'Cairo', sans-serif; background-color: #f0f4f8; }
         .moe-green { color: #00735C; }
         .bg-moe-green { background-color: #00735C; }
-        .bg-moe-gold { background-color: #a88532; }
         .step { display: none; }
         .step.active { display: block; animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        /* تحسين التنسيق ليتوافق مع الهوية */
+        .choices__inner { 
+            border-radius: 0.75rem !important; 
+            background-color: #f9fafb !important; 
+            border: 1px solid #e5e7eb !important;
+            padding: 8px !important;
+            min-height: 55px !important;
+            text-align: right;
+        }
+        .choices__list--dropdown { border-radius: 0.75rem !important; z-index: 50 !important; }
+        .choices__item--selectable.is-highlighted { background-color: #00735C !important; color: white !important; }
+        .choices__input { background-color: transparent !important; text-align: right; }
+        .choices[data-type*="select-one"]::after { left: 15px; right: auto; } /* تعديل مكان السهم للغة العربية */
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
@@ -21,12 +38,11 @@
 <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
     
     <div class="p-6 text-center border-b border-gray-50 bg-white">
-        <img src="logo.png" class="h-20 mx-auto object-contain">
+        <img src="logo.png" class="h-20 mx-auto object-contain" alt="Logo">
     </div>
 
     <div class="p-8">
         
-        <!-- الصفحة الأولى -->
         <div id="step1" class="step active text-center">
             <p class="text-gray-500 text-sm mb-1 font-semibold">لقاء</p>
             <h2 class="text-xl font-bold moe-green mb-4 Amiri">صاحب السمو الملكي الأمير</h2>
@@ -35,64 +51,42 @@
                 <p class="font-bold text-gray-700 mt-4 text-xs Amiri">أمير منطقة عسير ورئيس هيئة تطويرها</p>
             </div>
             <div class="bg-green-50 p-6 rounded-2xl mb-8 border-r-8 border-moe-green">
-                <p class="text-lg font-extrabold text-gray-800 Amiri">
-                    بـحـرّاس وبـوَّابـي <br> مدارس تعليم عسير
-                </p>
+                <p class="text-lg font-extrabold text-gray-800 Amiri">بـحـرّاس وبـوَّابـي <br> مدارس تعليم عسير</p>
             </div>
-            <button onclick="nextStep(2)" class="w-full bg-moe-green text-white py-4 rounded-2xl font-bold hover:bg-opacity-90 transition">
+            <button onclick="nextStep(2)" class="w-full bg-moe-green text-white py-4 rounded-2xl font-bold hover:bg-opacity-90 transition shadow-lg">
                 تـسـجـيـل الـحـضـور
             </button>
         </div>
 
-        <!-- صفحة الإدخال -->
         <div id="step2" class="step">
             <h3 class="text-lg font-bold text-center mb-6">بيانات تأكيد الحضور</h3>
 
             <form id="attendanceForm" class="space-y-4">
 
-                <!-- ✅ الوظيفة -->
-                <select id="job" required class="w-full p-4 bg-gray-50 border rounded-xl">
+                <select id="city" required class="w-full">
+                    <option value="" disabled selected>جاري تحميل المحافظات...</option>
+                </select>
+
+                <select id="school" required class="w-full" disabled>
+                    <option value="" disabled selected>اختر المحافظة أولاً</option>
+                </select>
+
+                <select id="job" required class="w-full p-4 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-moe-green">
                     <option value="" disabled selected>اختر الوظيفة</option>
-                    <option>مدير/ة</option>
-                    <option>حارس رسمي</option>
-                    <option>بواب شركة سمايا</option>
+                    <option value="حارس">حارس</option>
+                    <option value="بواب">بواب</option>
                 </select>
 
-                <input type="text" id="fullName" placeholder="الاسم الرباعي" required class="w-full p-4 bg-gray-50 border rounded-xl">
+                <input type="text" id="fullName" placeholder="الاسم الرباعي" required class="w-full p-4 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-moe-green text-right">
 
-                <input type="text" id="nationalId" maxlength="10" pattern="[0-9]{10}" placeholder="السجل المدني (10 أرقام)" required class="w-full p-4 bg-gray-50 border rounded-xl">
+                <input type="text" id="phone" maxlength="10" pattern="05[0-9]{8}" placeholder="05xxxxxxxx" required class="w-full p-4 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-moe-green text-right">
 
-                <select id="city" required class="w-full p-4 bg-gray-50 border rounded-xl">
-                    <option value="" disabled selected>اختر المحافظة</option>
-                    <option>أبها</option>
-                    <option>خميس مشيط</option>
-                    <option>بيشة</option>
-                    <option>النماص</option>
-                    <option>محايل عسير</option>
-                    <option>ظهران الجنوب</option>
-                    <option>سراة عبيدة</option>
-                    <option>رجال ألمع</option>
-                    <option>تثليث</option>
-                    <option>تنومة</option>
-                    <option>أحد رفيدة</option>
-                    <option>المجاردة</option>
-                    <option>بارق</option>
-                    <option>بلقرن</option>
-                    <option>الحرجة</option>
-                    <option>طريب</option>
-                </select>
-
-                <input type="text" id="phone" maxlength="10" pattern="05[0-9]{8}" placeholder="رقم الجوال (05xxxxxxxx)" required class="w-full p-4 bg-gray-50 border rounded-xl">
-
-                <input type="text" id="school" placeholder="المدرسة" required class="w-full p-4 bg-gray-50 border rounded-xl">
-
-                <button type="submit" id="submitBtn" class="w-full bg-moe-green text-white py-4 rounded-2xl font-bold transition">
+                <button type="submit" id="submitBtn" class="w-full bg-moe-green text-white py-4 rounded-2xl font-bold transition shadow-md">
                     تأكيد الحضور 
                 </button>
             </form>
         </div>
 
-        <!-- صفحة النجاح -->
         <div id="step3" class="step text-center">
             <div class="mb-6">
                 <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto text-3xl moe-green">✓</div>
@@ -105,7 +99,72 @@
 </div>
 
 <script>
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxpdVb_EgEFA0JJeY-cjW_SIN78TY0L3DZSKwgA8e_T14hFRdsM3FSDI5hiI9723uYH/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx7D7b0BNpbNOh2F0SKHwGevRTVrCAQ0_1XuRdrjOwy9BA_OcFZ9YHKoR60USXtAXhS/exec";
+
+let schoolData = {};
+let cityChoices, schoolChoices;
+
+// دالة لتطبيع النصوص العربية لضمان دقة البحث
+function normalizeArabic(text) {
+    if (!text) return "";
+    return text.toString()
+        .replace(/[أإآ]/g, "ا")
+        .replace(/ة/g, "ه")
+        .replace(/ى/g, "ي")
+        .trim();
+}
+
+// تهيئة القوائم
+function initChoices() {
+    // المحافظة: بحث معطل كما طلبت
+    cityChoices = new Choices('#city', { 
+        searchEnabled: false, 
+        itemSelectText: '',
+        shouldSort: false
+    });
+
+    // المدرسة: بحث مفعل مع تحسين المطابقة (Fuzzy Search)
+    schoolChoices = new Choices('#school', { 
+        searchEnabled: true, 
+        itemSelectText: '', 
+        noResultsText: 'لا توجد مدرسة بهذا الاسم',
+        noChoicesText: 'لا توجد خيارات متاحة',
+        searchPlaceholderValue: 'ابحث عن اسم المدرسة...',
+        fuseOptions: {
+            threshold: 0.3, // يجعل البحث مرناً وليس حرفياً تماماً
+            distance: 100
+        }
+    });
+}
+
+window.onload = async () => {
+    initChoices();
+    try {
+        const response = await fetch(GOOGLE_SCRIPT_URL);
+        const data = await response.json();
+        schoolData = data;
+        
+        let cities = Object.keys(schoolData).sort().map(city => ({ value: city, label: city }));
+        cityChoices.setChoices(cities, 'value', 'label', true);
+        cityChoices.setChoices([{ value: '', label: 'اختر المحافظة', selected: true, disabled: true }], 'value', 'label', false);
+
+    } catch (e) {
+        cityChoices.setChoices([{ value: '', label: 'فشل تحميل البيانات', selected: true, disabled: true }], 'value', 'label', true);
+    }
+};
+
+document.getElementById('city').addEventListener('change', function(event) {
+    const selectedCity = event.target.value;
+    schoolChoices.enable();
+    schoolChoices.clearChoices();
+    
+    if(schoolData[selectedCity]) {
+        // ترتيب المدارس أبجدياً وإضافتها
+        let schools = schoolData[selectedCity].sort().map(s => ({ value: s, label: s }));
+        schoolChoices.setChoices(schools, 'value', 'label', true);
+    }
+    schoolChoices.setChoices([{ value: '', label: 'اختر المدرسة أو ابحث عنها', selected: true, disabled: true }], 'value', 'label', false);
+});
 
 function nextStep(step) {
     document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
@@ -114,47 +173,31 @@ function nextStep(step) {
 
 document.getElementById('attendanceForm').addEventListener('submit', async function(e){
     e.preventDefault();
-
     const btn = document.getElementById('submitBtn');
-    const nationalId = document.getElementById('nationalId').value;
-    const phone = document.getElementById('phone').value;
-
-    if(nationalId.length !== 10 || phone.length !== 10){
-        alert("تأكد من إدخال 10 أرقام صحيحة");
-        return;
-    }
-
     btn.innerHTML = "⏳ جاري التسجيل...";
     btn.disabled = true;
 
     const payload = {
+        city: document.getElementById('city').value,
+        school: document.getElementById('school').value,
         job: document.getElementById('job').value,
         name: document.getElementById('fullName').value,
-        id: nationalId,
-        city: document.getElementById('city').value,
-        phone: phone,
-        school: document.getElementById('school').value
+        phone: document.getElementById('phone').value
     };
 
     try {
-        const response = await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload)
-        });
-
+        const response = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
         const result = await response.json();
-
         if (result.status === 'success') {
             nextStep(3);
         } else {
-            alert("حدث خطأ: " + result.message);
-            btn.innerHTML = "تأكيد الحضور ";
+            alert("حدث خطأ في التسجيل");
+            btn.innerHTML = "تأكيد الحضور";
             btn.disabled = false;
         }
     } catch (error) {
-        alert("تعذر الاتصال بالخادم");
-        btn.innerHTML = "تأكيد الحضور ";
+        alert("فشل الاتصال بالخادم");
+        btn.innerHTML = "تأكيد الحضور";
         btn.disabled = false;
     }
 });
