@@ -73,6 +73,7 @@
 
                 <select id="job" required class="w-full p-4 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-moe-green">
                     <option value="" disabled selected>اختر الوظيفة</option>
+                    <option value="مدير/ة">مدير/ة</option>
                     <option value="حارس">حارس</option>
                     <option value="بواب">بواب</option>
                 </select>
@@ -99,7 +100,7 @@
 </div>
 
 <script>
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx7D7b0BNpbNOh2F0SKHwGevRTVrCAQ0_1XuRdrjOwy9BA_OcFZ9YHKoR60USXtAXhS/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxoYxaN7aas-nE4jM_Qx0tdP5FnunUNDBeMV-18eRryZ2txRMocQ_azZ0ajNm4_RleZ/exec";
 
 let schoolData = {};
 let cityChoices, schoolChoices;
@@ -120,7 +121,8 @@ function initChoices() {
     cityChoices = new Choices('#city', { 
         searchEnabled: false, 
         itemSelectText: '',
-        shouldSort: false
+        shouldSort: false,
+        position: 'bottom' // إجبار القائمة على الفتح للأسفل
     });
 
     // المدرسة: بحث مفعل مع تحسين المطابقة (Fuzzy Search)
@@ -130,6 +132,7 @@ function initChoices() {
         noResultsText: 'لا توجد مدرسة بهذا الاسم',
         noChoicesText: 'لا توجد خيارات متاحة',
         searchPlaceholderValue: 'ابحث عن اسم المدرسة...',
+        position: 'bottom', // إجبار القائمة على الفتح للأسفل
         fuseOptions: {
             threshold: 0.3, // يجعل البحث مرناً وليس حرفياً تماماً
             distance: 100
@@ -145,10 +148,16 @@ window.onload = async () => {
         schoolData = data;
         
         let cities = Object.keys(schoolData).sort().map(city => ({ value: city, label: city }));
-        cityChoices.setChoices(cities, 'value', 'label', true);
-        cityChoices.setChoices([{ value: '', label: 'اختر المحافظة', selected: true, disabled: true }], 'value', 'label', false);
+        
+        // مسح الذاكرة بالكامل لإزالة نص "جاري التحميل"
+        cityChoices.clearStore(); 
+        
+        // إضافة خيار "اختر المحافظة" كخيار أول غير قابل للاختيار مع باقي المدن
+        let allChoices = [{ value: '', label: 'اختر المحافظة', selected: true, disabled: true }, ...cities];
+        cityChoices.setChoices(allChoices, 'value', 'label', true);
 
     } catch (e) {
+        cityChoices.clearStore(); // مسح الذاكرة في حالة الخطأ أيضاً
         cityChoices.setChoices([{ value: '', label: 'فشل تحميل البيانات', selected: true, disabled: true }], 'value', 'label', true);
     }
 };
